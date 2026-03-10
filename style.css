@@ -220,6 +220,7 @@ body {
   position: relative;
   width: 220px;
   height: 220px;
+  overflow: visible; /* 防止发光效果被容器裁剪 */
 }
 
 /* SVG 旋转 -90°，使进度弧从顶部（12点方向）开始 */
@@ -227,6 +228,7 @@ body {
   width: 100%;
   height: 100%;
   transform: rotate(-90deg);
+  overflow: visible; /* 防止 stroke 和 shadow 被裁剪 */
 }
 
 /* 背景轨道圆环 */
