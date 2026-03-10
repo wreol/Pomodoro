@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pomodoro Timer</title>
+  <!-- 主样式表 -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 应用根容器，最大宽度 480px，居中布局 -->
+  <div class="app">
+
+    <!-- ===== 顶部导航栏 ===== -->
+    <header class="header">
+      <!-- Logo：时钟图标 + 文字 -->
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span>Pomodoro</span>
+      </div>
+      <!-- 设置按钮：点击弹出设置面板 -->
+      <button class="btn-icon" id="btn-settings" title="设置" aria-label="设置">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- ===== 主体内容 ===== -->
+    <main class="main">
+
+      <!-- 模式切换标签页：专注 / 短休息 / 长休息 -->
+      <!-- role="tablist" 用于无障碍访问 -->
+      <div class="mode-tabs" role="tablist">
+        <button class="tab active" data-mode="pomodoro" role="tab" aria-selected="true">专注</button>
+        <button class="tab" data-mode="short" role="tab" aria-selected="false">短休息</button>
+        <button class="tab" data-mode="long" role="tab" aria-selected="false">长休息</button>
+      </div>
+
+      <!-- 计时器区域：SVG 环形进度条 + 时间数字 + 模式标签 -->
+      <div class="timer-container">
+        <div class="timer-ring">
+          <!-- SVG 环：旋转 -90° 使进度从顶部开始 -->
+          <svg class="ring-svg" viewBox="0 0 220 220">
+            <!-- 背景圆环（灰色轨道） -->
+            <circle class="ring-bg" cx="110" cy="110" r="100"/>
+            <!-- 进度圆环：stroke-dashoffset 由 JS 动态控制 -->
+            <circle class="ring-progress" cx="110" cy="110" r="100" id="ring-progress"/>
+          </svg>
+          <!-- 时间数字 + 模式文字，绝对定位在圆环中心 -->
+          <div class="timer-display">
+            <span class="time" id="time-display">25:00</span>
+            <span class="mode-label" id="mode-label">专注时间</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 控制按钮组：重置 | 开始/暂停 | 跳过 -->
+      <div class="controls">
+        <!-- 重置：将当前模式时间归零 -->
+        <button class="btn-icon btn-secondary" id="btn-reset" title="重置" aria-label="重置">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+          </svg>
+        </button>
+        <!-- 主按钮：开始 / 暂停 / 继续，文本由 JS 动态切换 -->
+        <button class="btn-primary" id="btn-start">开始</button>
+        <!-- 跳过：触发当前计时完成，跳转到下一个模式 -->
+        <button class="btn-icon btn-secondary" id="btn-skip" title="跳过" aria-label="跳过">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 4 15 12 5 20 5 4"/>
+            <line x1="19" y1="5" x2="19" y2="19"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- 会话计数区域：圆点进度 + 文字说明 -->
+      <!-- session-dots 内的圆点由 JS 根据 settings.sessions 动态生成 -->
+      <div class="session-info">
+        <div class="session-dots" id="session-dots">
+          <!-- JS 动态填充 -->
+        </div>
+        <span class="session-text">第 <span id="session-count">1</span> 组，共 <span id="session-total">4</span> 个番茄</span>
+      </div>
+    </main>
+
+    <!-- ===== 设置弹窗（底部抽屉式） ===== -->
+    <!-- aria-hidden 在打开时由 JS 移除，关闭时恢复 -->
+    <div class="modal-overlay" id="modal-overlay" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="设置">
+
+        <!-- 弹窗头部：标题 + 关闭按钮（sticky 吸顶） -->
+        <div class="modal-header">
+          <h2>设置</h2>
+          <button class="btn-icon" id="btn-close-modal" aria-label="关闭">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+
+          <!-- 时间设置：四个数字输入框，2列网格布局 -->
+          <section class="settings-section">
+            <h3>时间设置（分钟）</h3>
+            <div class="settings-grid">
+              <div class="setting-item">
+                <label for="set-pomodoro">专注时长</label>
+                <input type="number" id="set-pomodoro" min="1" max="60" value="25" />
+              </div>
+              <div class="setting-item">
+                <label for="set-short">短休息</label>
+                <input type="number" id="set-short" min="1" max="30" value="5" />
+              </div>
+              <div class="setting-item">
+                <label for="set-long">长休息</label>
+                <input type="number" id="set-long" min="1" max="60" value="15" />
+              </div>
+              <!-- 连续完成多少个番茄后触发长休息 -->
+              <div class="setting-item">
+                <label for="set-sessions">长休前轮数</label>
+                <input type="number" id="set-sessions" min="1" max="10" value="4" />
+              </div>
+            </div>
+          </section>
+
+          <!-- 提醒开关：声音、桌面通知、自动开始 -->
+          <section class="settings-section">
+            <h3>提醒设置</h3>
+            <div class="setting-row">
+              <label for="set-sound">声音提醒</label>
+              <!-- Toggle 开关，用 checkbox + CSS 实现 -->
+              <label class="switch">
+                <input type="checkbox" id="set-sound" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="setting-row">
+              <label for="set-notify">桌面通知</label>
+              <!-- 勾选时会触发 Notification.requestPermission() -->
+              <label class="switch">
+                <input type="checkbox" id="set-notify" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="setting-row">
+              <label for="set-auto">自动开始下一轮</label>
+              <label class="switch">
+                <input type="checkbox" id="set-auto" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </section>
+
+          <!-- 主题切换：深色 / 浅色 -->
+          <section class="settings-section">
+            <h3>主题</h3>
+            <div class="theme-options">
+              <button class="theme-btn active" data-theme="dark">深色</button>
+              <button class="theme-btn" data-theme="light">浅色</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- 弹窗底部：保存按钮 -->
+        <div class="modal-footer">
+          <button class="btn-primary" id="btn-save-settings">保存设置</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.app -->
+
+  <!-- 主逻辑脚本，放在 body 末尾确保 DOM 已加载 -->
+  <script src="app.js"></script>
+</body>
+</html>
